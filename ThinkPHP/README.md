@@ -27,3 +27,21 @@
         使用命令：php think menu -c testtwo
 
         創建成功之後會出現提示：Build Successed
+
+
+## 關於頁面有上角生成的導出,切換,列.搜索.
+
+如果不需要的話可以在對應的js文件中添加如下代碼.即可屏蔽
+
+* 切換卡片視圖和表格視圖兩種模式
+showToggle:false,
+* 顯示隱藏列可以快速切換字段列的顯示和隱藏
+showColumns:false,
+* 導出整個表的所有行導出整個表的所有行
+showExport:false,
+* 搜索
+search: false,
+* 搜索功能，
+commonSearch: false,
+* 表格上方的搜索搜索指表格上方的搜索
+searchFormVisible: false,
