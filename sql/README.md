@@ -1,0 +1,3 @@
+
+* 時間戳轉換    
+SELECT DATE_FORMAT(FROM_UNIXTIME(1583374247),'%Y-%m-%d');
