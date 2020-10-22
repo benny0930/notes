@@ -97,9 +97,13 @@ def getPTTStringByHtml(thisText, _url):
     main_container = soup.find(id='main-container')
     all_a = main_container.find_all('a')
     tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
-
+    aSend = []
     for a in all_a:
         contentOne = a.get('href')
+        if contentOne[-15:] in aSend:
+            continue
+        else:
+            aSend.append(contentOne[-15:])
         # print contentOne
         if 'gif' in contentOne:
             print str(contentOne)
@@ -193,8 +197,9 @@ def startIG():
 
         aIGNewUrl = file_data.split(',,,')
         for url in aIGNewUrl:
-            aIGRead[url] = ['1']
-            f2.write(",,," + url)
+            if len(url) > 0:
+                aIGRead[url] = ['1']
+                f2.write(",,," + url)
         f2.close()
         f2 = open(file_path2, 'r')
         file_data = f2.read()
@@ -282,10 +287,10 @@ while True:
         time.sleep(0.1)
 
     # 很牛幫 360 * 10 = 3600 = 1小時
-    if iLoopIndex % 360 == 0:
-        t1 = Thread(target=startHNBang)
-        t1.start()
-        time.sleep(0.1)
+    # if iLoopIndex % 360 == 0:
+    #     t1 = Thread(target=startHNBang)
+    #     t1.start()
+    #     time.sleep(0.1)
 
     # IG 10分鐘
     if iLoopIndex % 60 == 0:
