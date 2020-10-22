@@ -9,6 +9,8 @@ import requests.packages.urllib3
 requests.packages.urllib3.disable_warnings()
 aPTTRead = aHNBangRead = []
 aIGRead = {}
+aJKFRead = {}
+
 iLoopIndex = 0
 
 
@@ -275,22 +277,113 @@ def getIGStringByHtml(_url):
 
 
 # IG End ----------------------------------------------------------------
+# JKF Start ----------------------------------------------------------------
+def startJKF():
+    print u"search JKF 開始------"
+    try:
+        aId = ['393', '520', '1112', '574', '640', '611', '587', '535', '234', '525']
+        aId = ['660']
+        for sId in aId:
+            print u"search sId：" + str(sId)
+            getJKFLinkByHtml(sId)
+    except:
+        print u"search JKF 錯誤------"
+    print u"search JKF 結束------"
 
+
+def getJKFLinkByHtml(_id):
+    global aJKFRead
+    try:
+        if _id not in aJKFRead:
+            aJKFRead[_id] = []
+        url = 'https://www.jkforum.net/forum.php?mod=forumdisplay&typeid=&fid=' + str(
+            _id) + '&orderby=dateline&filter=dateline&dateline=86400&typeid=&orderby=dateline'
+        print url
+        isFirst = (len(aJKFRead[_id]) == 0)
+        soup = getSoup(url)
+        if not isFirst:
+            print u'new load _id：' + _id
+        waterfall = soup.find(id="waterfall")
+        test = waterfall.find_all('li')
+        for link in waterfall.find_all('li'):
+            if link.find('a'):
+                thisUrl = link.find('a').get('href')
+                aThisUrl = thisUrl.split('&')
+                print thisUrl
+                if aThisUrl[1] in aJKFRead[_id]:
+                    time.sleep(0.1)
+                else:
+                    aJKFRead[_id].append(aThisUrl[1])
+                    if not isFirst:
+                        print u'新頁面'
+                        txtLog(u"JKF new : " + 'https://www.JKF.cc' + thisUrl)
+                        getJKFStringByHtml('https://www.jkforum.net/' + thisUrl)
+        if len(aJKFRead) > 999:  # 最多保留30筆
+            aJKFRead.remove(aJKFRead[0])
+    except Exception as e2:
+        print e2
+        print u"getJKFLinkByHtml JKF 錯誤------"
+
+
+def getJKFStringByHtml(_url):
+    print u'page url：' + _url
+    tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
+    soup = getSoup(_url)
+    ignore_js_op = soup.find_all('ignore_js_op')
+    aSend = []
+    if len(ignore_js_op) > 0:
+        _files = {
+            'chat_id': '-1001253864581',
+            'parse_mode': 'HTML',
+            'text': _url
+        }
+        requests.post(tgUrl, data=_files)
+    for op in ignore_js_op:
+        img = op.find('img')
+        contentOne = img.get('file')
+        if contentOne in aSend:
+            continue
+        else:
+            aSend.append(contentOne)
+        # print contentOne
+        if 'gif' in contentOne:
+            print str(contentOne)
+            txtLog(u"new gif : " + str(contentOne))
+            _files = {
+                'chat_id': '-1001340182296',
+                'parse_mode': 'HTML',
+                'text': contentOne
+            }
+            txtLog(u"new video")
+            requests.post(tgUrl, data=_files)
+        else:
+            print str(contentOne)
+            txtLog(u"new img : " + str(contentOne))
+            _files = {
+                'chat_id': '-1001253864581',
+                'parse_mode': 'HTML',
+                'text': contentOne
+            }
+            txtLog(u"new img")
+            requests.post(tgUrl, data=_files)
+
+
+# JKF End ----------------------------------------------------------------
 while True:
     print '__________'
     print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "( " + str(iLoopIndex) + " )"
-
-    # 漫畫 30 * 10 = 300 = 5分鐘
-    if iLoopIndex % 30 == 0:
-        t_comic = Thread(target=startLoadEpisode)
-        t_comic.start()
-        time.sleep(0.1)
 
     # 很牛幫 360 * 10 = 3600 = 1小時
     # if iLoopIndex % 360 == 0:
     #     t1 = Thread(target=startHNBang)
     #     t1.start()
     #     time.sleep(0.1)
+
+    # 漫畫 30 * 10 = 300 = 5分鐘
+    if iLoopIndex % 30 == 0:
+        t_comic = Thread(target=startLoadEpisode)
+        t_comic.start()
+        time.sleep(0.1)
 
     # IG 10分鐘
     if iLoopIndex % 60 == 0:
@@ -300,6 +393,12 @@ while True:
     # PTT
     if iLoopIndex >= 0:
         t_ptt = Thread(target=startPTT)
+        t_ptt.start()
+        t_ptt.join()
+
+    # JKF 10分鐘
+    if iLoopIndex % 60 == 0:
+        t_ptt = Thread(target=startJKF)
         t_ptt.start()
         t_ptt.join()
 
