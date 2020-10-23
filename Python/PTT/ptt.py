@@ -10,7 +10,8 @@ requests.packages.urllib3.disable_warnings()
 aPTTRead = aHNBangRead = []
 aIGRead = {}
 aJKFRead = {}
-
+aCKRead = {}
+tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
 iLoopIndex = 0
 
 
@@ -25,10 +26,34 @@ def txtLog(text):
 
 def getSoup(_url):
     URL = _url
-    my_headers = {'cookie': 'over18=1;'}
-    response = requests.get(URL, headers=my_headers)
+    # my_headers = {'cookie': 'over18=1;'}
+    # response = requests.get(URL, headers=my_headers)
+    headers = {'cookie': 'over18=1;',
+               'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'}
+    response = requests.get(URL, headers=headers)
     soup = bs4.BeautifulSoup(response.text, "html.parser")
     return soup
+
+
+def sendImg(_text):
+    print _text
+    try:
+        if 'gif' in _text:
+            _files = {
+                'chat_id': '-1001340182296',
+                'parse_mode': 'HTML',
+                'text': _text
+            }
+        else:
+            _files = {
+                'chat_id': '-1001253864581',
+                'parse_mode': 'HTML',
+                'text': _text
+            }
+        txtLog(u"new gif : " + _text)
+        requests.post(tgUrl, data=_files)
+    except:
+        time.sleep(0.1)
 
 
 # comic Start ----------------------------------------------------------------
@@ -88,94 +113,25 @@ def getPTTLinkByHtml(_url):
                     if not isFirst:
                         print u'新頁面'
                         txtLog(u"PTT new : " + 'https://www.ptt.cc' + thisUrl)
-                        getPTTStringByHtml(thisText, 'https://www.ptt.cc' + thisUrl)
+                        print u'page url：' + _url
+                        soup = getSoup(_url)
+                        main_container = soup.find(id='main-container')
+                        all_a = main_container.find_all('a')
+                        aSend = []
+                        for a in all_a:
+                            contentOne = a.get('href')
+                            if contentOne[-15:] in aSend:
+                                continue
+                            else:
+                                aSend.append(contentOne[-15:])
+                            sendImg(contentOne)
     if len(aPTTRead) > 30:  # 最多保留30筆
         aPTTRead.remove(aPTTRead[0])
 
 
-def getPTTStringByHtml(thisText, _url):
-    print u'page url：' + _url
-    soup = getSoup(_url)
-    main_container = soup.find(id='main-container')
-    all_a = main_container.find_all('a')
-    tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
-    aSend = []
-    for a in all_a:
-        contentOne = a.get('href')
-        if contentOne[-15:] in aSend:
-            continue
-        else:
-            aSend.append(contentOne[-15:])
-        # print contentOne
-        if 'gif' in contentOne:
-            print str(contentOne)
-            txtLog(u"new gif : " + str(contentOne))
-            # print("push：" + contentOne)
-            tgUrlThis = tgUrl + "chat_id=-1001340182296&parse_mode=HTML&text="
-            if thisText != "":
-                requests.get(tgUrlThis + thisText, verify=False)
-                thisText = ""
-            requests.get(tgUrlThis + contentOne, verify=False)
-        else:
-            print str(contentOne)
-            txtLog(u"new img : " + str(contentOne))
-            tgUrlThis = tgUrl + "chat_id=-1001253864581&parse_mode=HTML&text="
-            if thisText != "":
-                requests.get(tgUrlThis + thisText, verify=False)
-                thisText = ""
-            requests.get(tgUrlThis + contentOne, verify=False)
-
-
 # PTT End ----------------------------------------------------------------
-# HNBang Start ----------------------------------------------------------------
-def startHNBang():
-    print u"search 很牛幫 開始------"
-    try:
-        url = 'https://hnbang.com/category/meinv'
-        key = 'gif'
-        print u"search url：" + url
-        getHNBangByHtml(url)
-    except:
-        time.sleep(0.1)
-    print u"search 很牛幫 結束------"
 
 
-def getHNBangByHtml(_url):
-    global aHNBangRead
-    isFirst = (len(aHNBangRead) == 0)
-    soup = getSoup(_url)
-    if not isFirst:
-        print u'last new url：' + aHNBangRead[-1]
-    for link in soup.find_all('article'):
-        if link.find('a'):
-            thisUrl = link.find('a').get('href')
-            print thisUrl[-10:]
-            if thisUrl[-10:] in aHNBangRead:
-                time.sleep(0.1)
-            else:
-                aHNBangRead.append(thisUrl[-10:])
-                if not isFirst:
-                    print u'new page'
-                    txtLog(u"HNBang new page : " + thisUrl)
-                    getHNBangStringByHtml(thisUrl)
-                    break
-    if len(aHNBangRead) > 99:  # 最多保留30筆
-        aHNBangRead.remove(aHNBangRead[0])
-
-
-def getHNBangStringByHtml(_url):
-    print u'page url：' + _url
-    soup = getSoup(_url)
-    article = soup.find('article')
-    tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
-    tgUrl = tgUrl + "chat_id=-1001340182296&parse_mode=HTML&text="
-    for link in article.find_all('img'):
-        thisUrl = link.get('src')
-        # print thisUrl
-        requests.get(tgUrl + thisUrl, verify=False)
-
-
-# HNBang End ----------------------------------------------------------------
 # IG Start ----------------------------------------------------------------
 def startIG():
     print u"search IG 開始------"
@@ -241,17 +197,8 @@ def getIGStringByHtml(_url):
                         if 'edges' in oEdges['node']['edge_sidecar_to_children']:
                             aEdgesOne = oEdges['node']['edge_sidecar_to_children']['edges']
                             for oEdgesOne in aEdgesOne:
-                                try:
-                                    if 'display_url' in oEdgesOne['node']:
-                                        _files = {
-                                            'chat_id': '-1001253864581',
-                                            'parse_mode': 'HTML',
-                                            'text': oEdgesOne['node']['display_url']
-                                        }
-                                        txtLog(u"new img")
-                                        requests.post(tgUrl, data=_files)
-                                except:
-                                    time.sleep(0.1)
+                                if 'display_url' in oEdgesOne['node']:
+                                    sendImg(oEdgesOne['node']['display_url'])
 
     aEdges = re['graphql']['user']["edge_felix_video_timeline"]['edges']
     for oEdges in aEdges:
@@ -261,16 +208,7 @@ def getIGStringByHtml(_url):
             aIGRead[_url].append(oEdges['node']['id'])
             if not isFirst:
                 if 'video_url' in oEdges['node']:
-                    try:
-                        _files = {
-                            'chat_id': '-1001340182296',
-                            'parse_mode': 'HTML',
-                            'text': oEdges['node']['video_url']
-                        }
-                        txtLog(u"new video")
-                        requests.post(tgUrl, data=_files)
-                    except:
-                        time.sleep(0.1)
+                    sendImg(oEdges['node']['video_url'])
 
     if len(aIGRead[_url]) > 999:  # 最多保留30筆
         aHNBangRead.remove(aIGRead[_url][0])
@@ -335,17 +273,11 @@ def getJKFLinkByHtml(_id):
 
 def getJKFStringByHtml(_url):
     print u'page url：' + _url
-    tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
     soup = getSoup(_url)
     ignore_js_op = soup.find_all('ignore_js_op')
     aSend = []
     if len(ignore_js_op) > 0:
-        _files = {
-            'chat_id': '-1001253864581',
-            'parse_mode': 'HTML',
-            'text': _url
-        }
-        requests.post(tgUrl, data=_files)
+        sendImg(_url)
     for op in ignore_js_op:
         img = op.find('img')
         contentOne = img.get('file')
@@ -354,36 +286,89 @@ def getJKFStringByHtml(_url):
         else:
             aSend.append(contentOne)
         # print contentOne
-        if 'gif' in contentOne:
-            print str(contentOne)
-            txtLog(u"new gif : " + str(contentOne))
-            _files = {
-                'chat_id': '-1001340182296',
-                'parse_mode': 'HTML',
-                'text': contentOne
-            }
-            requests.post(tgUrl, data=_files)
-        else:
-            print str(contentOne)
-            txtLog(u"new img : " + str(contentOne))
-            _files = {
-                'chat_id': '-1001253864581',
-                'parse_mode': 'HTML',
-                'text': contentOne
-            }
-            requests.post(tgUrl, data=_files)
+        sendImg(contentOne)
 
 
 # JKF End ----------------------------------------------------------------
+
+# CK Start ----------------------------------------------------------------
+def startCK():
+    print u"search CK 開始------"
+    try:
+        # aId = ['forum-3866-1']
+        file_path2 = "./CK.txt"
+        if not os.path.isfile(file_path2):
+            f2 = open(file_path2, 'w')
+            f2.close()
+        f2 = open(file_path2, 'r')
+        file_data = f2.read()
+        f2.close()
+        aId = file_data.split(',,,')
+
+        for sId in aId:
+            print u"search sId：" + str(sId)
+            getCKLinkByHtml(sId)
+    except:
+        print u"search CK 錯誤------"
+    print u"search CK 結束------"
+
+
+def getCKLinkByHtml(_id):
+    global aCKRead
+    try:
+        if _id not in aCKRead:
+            aCKRead[_id] = []
+        url = 'https://ck101.com/' + str(_id) + '.html?order_by=dateline'
+
+        isFirst = (len(aCKRead[_id]) == 0)
+        soup = getSoup(url)
+        if not isFirst:
+            print u'new load _id：' + _id
+        table = soup.find(id="threadlisttableid")
+        for tbody in table.find_all('tbody'):
+            tid = str(tbody.get('tid'))
+            if tid != 'None':
+                if tid in aCKRead[_id]:
+                    time.sleep(0.1)
+                else:
+                    aCKRead[_id].append(tid)
+                    thisUrl = 'https://ck101.com/thread-' + tid + '-1-1.html'
+                    print thisUrl
+                    if not isFirst:
+                        print u'新頁面'
+                        txtLog(u"CK new : " + thisUrl)
+                        getCKStringByHtml(thisUrl)
+        if len(aCKRead) > 999:  # 最多保留30筆
+            aCKRead.remove(aCKRead[0])
+    except Exception as e2:
+        print e2
+        print u"getCKLinkByHtml CK 錯誤------"
+
+
+def getCKStringByHtml(_url):
+    print u'page url：' + _url
+    soup = getSoup(_url)
+    table = soup.find(id="lightboxwrap")
+    imgs = table.find_all('img')
+    aSend = []
+    if len(imgs) > 0:
+        sendImg(_url)
+    for img in imgs:
+        contentOne = img.get('file')
+        if contentOne:
+            aContentOne = contentOne.split('?')
+            contentOne = aContentOne[0]
+            if contentOne in aSend:
+                continue
+            else:
+                aSend.append(contentOne)
+            sendImg(contentOne)
+
+
+# CK End ----------------------------------------------------------------
 while True:
     print '__________'
     print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "( " + str(iLoopIndex) + " )"
-
-    # 很牛幫 360 * 10 = 3600 = 1小時
-    # if iLoopIndex % 360 == 0:
-    #     t1 = Thread(target=startHNBang)
-    #     t1.start()
-    #     time.sleep(0.1)
 
     # 漫畫 30 * 10 = 300 = 5分鐘
     if iLoopIndex % 30 == 0:
@@ -402,9 +387,15 @@ while True:
         t_ptt.start()
         t_ptt.join()
 
-    # JKF 10分鐘
-    if iLoopIndex % 60 == 0:
+    # JKF 11分鐘
+    if iLoopIndex % 66 == 0:
         t_ptt = Thread(target=startJKF)
+        t_ptt.start()
+        t_ptt.join()
+
+    # CK 12分鐘
+    if iLoopIndex % 72 == 0:
+        t_ptt = Thread(target=startCK)
         t_ptt.start()
         t_ptt.join()
 
