@@ -1,3 +1,3 @@
 
-pyinstaller -F
+pyinstaller -F ptt.py
 

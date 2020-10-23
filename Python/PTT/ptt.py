@@ -281,8 +281,16 @@ def getIGStringByHtml(_url):
 def startJKF():
     print u"search JKF 開始------"
     try:
-        aId = ['393', '520', '1112', '574', '640', '611', '587', '535', '234', '525']
-        aId = ['660']
+        # aId = ['393', '520', '1112', '574', '640', '611', '587', '535', '234']
+        file_path2 = "./JKF.txt"
+        if not os.path.isfile(file_path2):
+            f2 = open(file_path2, 'w')
+            f2.close()
+        f2 = open(file_path2, 'r')
+        file_data = f2.read()
+        f2.close()
+        aId = file_data.split(',,,')
+
         for sId in aId:
             print u"search sId：" + str(sId)
             getJKFLinkByHtml(sId)
@@ -354,7 +362,6 @@ def getJKFStringByHtml(_url):
                 'parse_mode': 'HTML',
                 'text': contentOne
             }
-            txtLog(u"new video")
             requests.post(tgUrl, data=_files)
         else:
             print str(contentOne)
@@ -364,7 +371,6 @@ def getJKFStringByHtml(_url):
                 'parse_mode': 'HTML',
                 'text': contentOne
             }
-            txtLog(u"new img")
             requests.post(tgUrl, data=_files)
 
 
