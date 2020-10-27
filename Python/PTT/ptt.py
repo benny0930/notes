@@ -37,20 +37,32 @@ def getSoup(_url):
 
 def sendImg(_text):
     print _text
+    file_path2 = "./NO.txt"
+    if not os.path.isfile(file_path2):
+        f2 = open(file_path2, 'w')
+        f2.close()
+    f2 = open(file_path2, 'r')
+    file_data = f2.read()
+    f2.close()
+    aNo = file_data.split(',,,')
+    if _text in aNo:
+        return 1
     try:
         if 'gif' in _text:
+            txtLog(u"new gif : " + _text)
             _files = {
                 'chat_id': '-1001340182296',
                 'parse_mode': 'HTML',
                 'text': _text
             }
         else:
+            txtLog(u"new img : " + _text)
             _files = {
                 'chat_id': '-1001253864581',
                 'parse_mode': 'HTML',
                 'text': _text
             }
-        txtLog(u"new gif : " + _text)
+
         requests.post(tgUrl, data=_files)
     except:
         time.sleep(0.1)
@@ -113,8 +125,8 @@ def getPTTLinkByHtml(_url):
                     if not isFirst:
                         print u'新頁面'
                         txtLog(u"PTT new : " + 'https://www.ptt.cc' + thisUrl)
-                        print u'page url：' + _url
-                        soup = getSoup(_url)
+                        print u'page url：' + 'https://www.ptt.cc' + thisUrl
+                        soup = getSoup('https://www.ptt.cc' + thisUrl)
                         main_container = soup.find(id='main-container')
                         all_a = main_container.find_all('a')
                         aSend = []
