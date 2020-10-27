@@ -467,7 +467,13 @@ while True:
     print '__________'
     print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "( " + str(iLoopIndex) + " )"
 
-    # 漫畫 30 * 10 = 300 = 5分鐘
+    # PTT
+    if iLoopIndex >= 0:
+        t_ptt = Thread(target=startPTT)
+        t_ptt.start()
+        t_ptt.join()
+
+    # 漫畫 5分鐘
     if iLoopIndex % 30 == 0:
         t_comic = Thread(target=startLoadEpisode)
         t_comic.start()
@@ -478,20 +484,14 @@ while True:
         t_ig = Thread(target=startIG)
         t_ig.start()
 
-    # PTT
-    if iLoopIndex >= 0:
-        t_ptt = Thread(target=startPTT)
-        t_ptt.start()
-        t_ptt.join()
-
-    # JKF 11分鐘
-    if iLoopIndex % 66 == 0:
+    # JKF 12分鐘
+    if iLoopIndex % 72 == 0:
         t_ptt = Thread(target=startJKF)
         t_ptt.start()
         t_ptt.join()
 
-    # CK 12分鐘
-    if iLoopIndex % 72 == 0:
+    # CK 14分鐘
+    if iLoopIndex % 84 == 0:
         t_ptt = Thread(target=startCK)
         t_ptt.start()
         t_ptt.join()
