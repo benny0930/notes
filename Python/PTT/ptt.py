@@ -11,8 +11,9 @@ aPTTRead = aHNBangRead = []
 aIGRead = {}
 aJKFRead = {}
 aCKRead = {}
-tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
 iLoopIndex = 0
+iGIFIndex = 0
+iIMGIndex = 0
 
 
 def txtLog(text):
@@ -35,7 +36,8 @@ def getSoup(_url):
     return soup
 
 
-def sendImg(_text):
+def sendMsg(_type, _text):
+    tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
     print _text
     file_path2 = "./NO.txt"
     if not os.path.isfile(file_path2):
@@ -48,7 +50,7 @@ def sendImg(_text):
     if _text in aNo:
         return 1
     try:
-        if 'gif' in _text:
+        if 'gif' in _type:
             txtLog(u"new gif : " + _text)
             _files = {
                 'chat_id': '-1001340182296',
@@ -62,6 +64,53 @@ def sendImg(_text):
                 'parse_mode': 'HTML',
                 'text': _text
             }
+
+        requests.post(tgUrl, data=_files)
+    except:
+        time.sleep(0.1)
+
+
+def sendImg(_text):
+    global iIMGIndex, iGIFIndex
+
+    print _text
+    file_path2 = "./NO.txt"
+    if not os.path.isfile(file_path2):
+        f2 = open(file_path2, 'w')
+        f2.close()
+    f2 = open(file_path2, 'r')
+    file_data = f2.read()
+    f2.close()
+    aNo = file_data.split(',,,')
+    if _text in aNo:
+        return 1
+    try:
+        if 'gif' in _text:
+            tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendAudio?"
+            txtLog(u"new gif : " + _text)
+            _files = {
+                'chat_id': '-1001340182296',
+                'parse_mode': 'HTML',
+                'audio': _text
+            }
+            iGIFIndex = iGIFIndex + 1
+            if iGIFIndex > 100:
+                iGIFIndex = 0
+                sendMsg('gif',
+                        "<p>友站連結：</p><p>正妹圖片群聚地 https://t.me/BeautifulGirlJpg</p><p>正妹GIF群聚地 https://t.me/BeautifulGirlG</p>")
+        else:
+            tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendPhoto?"
+            txtLog(u"new img : " + _text)
+            _files = {
+                'chat_id': '-1001253864581',
+                # 'parse_mode': 'HTML',
+                'photo': _text
+            }
+            iIMGIndex = iIMGIndex + 1
+            if iIMGIndex > 100:
+                iIMGIndex = 0
+                sendMsg('img',
+                        "<p>友站連結：</p><p>正妹圖片群聚地 https://t.me/BeautifulGirlJpg</p><p>正妹GIF群聚地 https://t.me/BeautifulGirlG</p>")
 
         requests.post(tgUrl, data=_files)
     except:
@@ -98,6 +147,8 @@ def startPTT():
 def getPTTLinkByHtml(_url):
     global aPTTRead
     isFirst = (len(aPTTRead) == 0)
+    bIMGFirst = True
+    bGIFFirst = True
     soup = getSoup(_url)
     if not isFirst:
         print u'new load url：' + aPTTRead[-1]
@@ -136,6 +187,14 @@ def getPTTLinkByHtml(_url):
                                 continue
                             else:
                                 aSend.append(contentOne[-15:])
+                            if 'gif' in contentOne:
+                                if bGIFFirst:
+                                    bGIFFirst = False
+                                    sendMsg('gif', _url)
+                            else:
+                                if bIMGFirst:
+                                    bIMGFirst = False
+                                    sendMsg('img', _url)
                             sendImg(contentOne)
     if len(aPTTRead) > 30:  # 最多保留30筆
         aPTTRead.remove(aPTTRead[0])
@@ -186,8 +245,9 @@ def startIG():
 
 def getIGStringByHtml(_url):
     print u'page url：' + _url
-
     global aIGRead
+    bIMGFirst = True
+    bGIFFirst = True
     if _url not in aIGRead:
         aIGRead[_url] = []
     isFirst = (len(aIGRead[_url]) == 0)
@@ -198,7 +258,6 @@ def getIGStringByHtml(_url):
     tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
     aEdges = re['graphql']['user']["edge_owner_to_timeline_media"]['edges']
     for oEdges in aEdges:
-
         if oEdges['node']['id'] in aIGRead[_url]:
             time.sleep(0.1)
         else:
@@ -210,6 +269,9 @@ def getIGStringByHtml(_url):
                             aEdgesOne = oEdges['node']['edge_sidecar_to_children']['edges']
                             for oEdgesOne in aEdgesOne:
                                 if 'display_url' in oEdgesOne['node']:
+                                    if bIMGFirst:
+                                        bIMGFirst = False
+                                        sendMsg('img', igUrl)
                                     sendImg(oEdgesOne['node']['display_url'])
 
     aEdges = re['graphql']['user']["edge_felix_video_timeline"]['edges']
@@ -220,6 +282,9 @@ def getIGStringByHtml(_url):
             aIGRead[_url].append(oEdges['node']['id'])
             if not isFirst:
                 if 'video_url' in oEdges['node']:
+                    if bGIFFirst:
+                        bGIFFirst = False
+                        sendMsg('gif', igUrl)
                     sendImg(oEdges['node']['video_url'])
 
     if len(aIGRead[_url]) > 999:  # 最多保留30筆
@@ -285,11 +350,13 @@ def getJKFLinkByHtml(_id):
 
 def getJKFStringByHtml(_url):
     print u'page url：' + _url
+    bIMGFirst = True
+    bGIFFirst = True
     soup = getSoup(_url)
     ignore_js_op = soup.find_all('ignore_js_op')
     aSend = []
-    if len(ignore_js_op) > 0:
-        sendImg(_url)
+    # if len(ignore_js_op) > 0:
+    #     sendImg(_url)
     for op in ignore_js_op:
         img = op.find('img')
         contentOne = img.get('file')
@@ -298,6 +365,14 @@ def getJKFStringByHtml(_url):
         else:
             aSend.append(contentOne)
         # print contentOne
+        if 'gif' in contentOne:
+            if bGIFFirst:
+                bGIFFirst = False
+                sendMsg('gif', _url)
+        else:
+            if bIMGFirst:
+                bIMGFirst = False
+                sendMsg('img', _url)
         sendImg(contentOne)
 
 
@@ -363,8 +438,10 @@ def getCKStringByHtml(_url):
     table = soup.find(id="lightboxwrap")
     imgs = table.find_all('img')
     aSend = []
-    if len(imgs) > 0:
-        sendImg(_url)
+    bIMGFirst = True
+    bGIFFirst = True
+    # if len(imgs) > 0:
+    #     sendImg(_url)
     for img in imgs:
         contentOne = img.get('file')
         if contentOne:
@@ -374,6 +451,14 @@ def getCKStringByHtml(_url):
                 continue
             else:
                 aSend.append(contentOne)
+            if 'gif' in contentOne:
+                if bGIFFirst:
+                    bGIFFirst = False
+                    sendMsg('gif', _url)
+            else:
+                if bIMGFirst:
+                    bIMGFirst = False
+                    sendMsg('img', _url)
             sendImg(contentOne)
 
 
