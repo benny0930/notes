@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-import requests
-import bs4
+import json
 import os
 import time
-from threading import Thread
+import bs4
+import requests
 import requests.packages.urllib3
+from threading import Thread
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 requests.packages.urllib3.disable_warnings()
 aPTTRead = aHNBangRead = []
 aIGRead = {}
 aJKFRead = {}
 aCKRead = {}
+aShotUrl = {}
 iLoopIndex = 0
 iGIFIndex = 0
 iIMGIndex = 0
@@ -38,7 +43,7 @@ def getSoup(_url):
 
 def sendMsg(_type, _text):
     tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
-    print _text
+    # print _text
     file_path2 = "./NO.txt"
     if not os.path.isfile(file_path2):
         f2 = open(file_path2, 'w')
@@ -51,14 +56,14 @@ def sendMsg(_type, _text):
         return 1
     try:
         if 'gif' in _type:
-            txtLog(u"new gif : " + _text)
+            txtLog(u"new gif")
             _files = {
                 'chat_id': '-1001340182296',
                 'parse_mode': 'HTML',
                 'text': _text
             }
         else:
-            txtLog(u"new img : " + _text)
+            txtLog(u"new img")
             _files = {
                 'chat_id': '-1001253864581',
                 'parse_mode': 'HTML',
@@ -66,7 +71,8 @@ def sendMsg(_type, _text):
             }
 
         requests.post(tgUrl, data=_files)
-    except:
+    except Exception as e2:
+        # print e2
         time.sleep(0.1)
 
 
@@ -97,7 +103,7 @@ def sendImg(_text):
             if iGIFIndex > 100:
                 iGIFIndex = 0
                 sendMsg('gif',
-                        "<p>友站連結：</p><p>正妹圖片群聚地 https://t.me/BeautifulGirlJpg</p><p>正妹GIF群聚地 https://t.me/BeautifulGirlG</p>")
+                        "友站連結：\n正妹圖片群聚地 https://t.me/BeautifulGirlJpg</p><p>正妹GIF群聚地 https://t.me/BeautifulGirlG")
         else:
             tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendPhoto?"
             txtLog(u"new img : " + _text)
@@ -110,11 +116,69 @@ def sendImg(_text):
             if iIMGIndex > 100:
                 iIMGIndex = 0
                 sendMsg('img',
-                        "<p>友站連結：</p><p>正妹圖片群聚地 https://t.me/BeautifulGirlJpg</p><p>正妹GIF群聚地 https://t.me/BeautifulGirlG</p>")
+                        "友站連結：\n正妹圖片群聚地 https://t.me/BeautifulGirlJpg</p><p>正妹GIF群聚地 https://t.me/BeautifulGirlG")
 
         requests.post(tgUrl, data=_files)
-    except:
+    except Exception as e2:
         time.sleep(0.1)
+
+
+def shotUrl(_url):
+    global aShotUrl
+    try:
+        file_path2 = "./shotUrl.txt"
+        if not os.path.isfile(file_path2):
+            f2 = open(file_path2, 'w')
+            f2.close()
+
+        f2 = open(file_path2, 'r')
+        file_data = f2.read()
+        f2.close()
+
+        aShotUrl = json.loads(file_data)
+
+        if _url in aShotUrl:
+            return aShotUrl[_url]
+
+        options = webdriver.ChromeOptions()
+        options.add_argument('--log-level=3')
+        options.add_argument('–no-sandbox')
+        driver = webdriver.Chrome(chrome_options=options, executable_path='C:\\LongPay\\file\\chromedriver.exe')
+        driver.get("http://b00.tw/users/sign_in")
+        driver.maximize_window()
+        driver.implicitly_wait(3)
+
+        ele_email = driver.find_element_by_css_selector('#user_email')
+        ele_password = driver.find_element_by_css_selector('#user_password')
+        time.sleep(1)
+        ele_email.send_keys("kiey093001@gmail.com")
+        time.sleep(1)
+        ele_password.send_keys("qq112233")
+        time.sleep(2)
+        actions = ActionChains(driver)
+        actions.send_keys(Keys.RETURN)
+        actions.perform()
+        time.sleep(3)
+        ele_url = driver.find_element_by_css_selector('#url')
+        ele_url.send_keys(_url)
+        time.sleep(1)
+        actions = ActionChains(driver)
+        actions.send_keys(Keys.RETURN)
+        actions.perform()
+        ele_short_url_id = driver.find_element_by_css_selector('#short_url_id').text
+        aShotUrl[_url] = ele_short_url_id
+
+        sNotice = json.dumps(aShotUrl)
+
+        f2 = open(file_path2, 'w+')
+        f2.write(sNotice)
+        f2.close()
+
+        return ele_short_url_id
+    except Exception as e2:
+        print 'shotUrl error'
+        print e2
+        return _url
 
 
 # comic Start ----------------------------------------------------------------
@@ -124,7 +188,7 @@ def startLoadEpisode():
     try:
 
         requests.get('http://benny/api/comic/loadEpisode')
-    except:
+    except Exception as e2:
         time.sleep(0.1)
     print u"renew comic 結束------"
     txtLog(u"comic end")
@@ -140,7 +204,7 @@ def startPTT():
         key = 'gif'
         print u"search url：" + url
         getPTTLinkByHtml(url)
-    except:
+    except Exception as e2:
         time.sleep(0.1)
     print u"search PTT 結束------"
     txtLog("PTT End")
@@ -171,33 +235,39 @@ def getPTTLinkByHtml(_url):
                     thisText = "PTT"
                     print thisUrl
 
-                if thisUrl in aPTTRead:
+                try:
+                    if thisUrl in aPTTRead:
+                        time.sleep(0.1)
+                    else:
+                        aPTTRead.append(thisUrl)
+                        if not isFirst:
+                            print u'新頁面'
+                            txtLog(u"PTT new : " + 'https://www.ptt.cc' + thisUrl)
+                            print u'page url：' + 'https://www.ptt.cc' + thisUrl
+                            soup = getSoup('https://www.ptt.cc' + thisUrl)
+                            main_container = soup.find(id='main-container')
+                            all_a = main_container.find_all('a')
+                            aSend = []
+                            for a in all_a:
+                                contentOne = a.get('href')
+                                if contentOne[-15:] in aSend:
+                                    continue
+                                else:
+                                    aSend.append(contentOne[-15:])
+                                if 'gif' in contentOne:
+                                    if bGIFFirst:
+                                        bGIFFirst = False
+                                        shotPath = shotUrl('https://www.ptt.cc' + thisUrl)
+                                        sendMsg('gif', thisText + u'\n來源網站\n' + shotPath)
+                                else:
+                                    if bIMGFirst:
+                                        bIMGFirst = False
+                                        shotPath = shotUrl('https://www.ptt.cc' + thisUrl)
+                                        sendMsg('img', thisText + u'\n來源網站\n' + shotPath)
+                                sendImg(contentOne)
+
+                except Exception as e2:
                     time.sleep(0.1)
-                else:
-                    aPTTRead.append(thisUrl)
-                    if not isFirst:
-                        print u'新頁面'
-                        txtLog(u"PTT new : " + 'https://www.ptt.cc' + thisUrl)
-                        print u'page url：' + 'https://www.ptt.cc' + thisUrl
-                        soup = getSoup('https://www.ptt.cc' + thisUrl)
-                        main_container = soup.find(id='main-container')
-                        all_a = main_container.find_all('a')
-                        aSend = []
-                        for a in all_a:
-                            contentOne = a.get('href')
-                            if contentOne[-15:] in aSend:
-                                continue
-                            else:
-                                aSend.append(contentOne[-15:])
-                            if 'gif' in contentOne:
-                                if bGIFFirst:
-                                    bGIFFirst = False
-                                    sendMsg('gif', 'https://www.ptt.cc' + thisUrl)
-                            else:
-                                if bIMGFirst:
-                                    bIMGFirst = False
-                                    sendMsg('img', 'https://www.ptt.cc' + thisUrl)
-                            sendImg(contentOne)
     if len(aPTTRead) > 30:  # 最多保留30筆
         aPTTRead.remove(aPTTRead[0])
 
@@ -207,6 +277,7 @@ def getPTTLinkByHtml(_url):
 
 # IG Start ----------------------------------------------------------------
 def startIG():
+    global aIGRead
     txtLog("IG Start")
     print u"search IG 開始------"
     try:
@@ -241,7 +312,7 @@ def startIG():
             if url != '':
                 print u"search url：" + url
                 getIGStringByHtml(url)
-    except:
+    except Exception as e2:
         time.sleep(0.1)
     print u"search IG 結束------"
     txtLog("IG End")
@@ -257,10 +328,14 @@ def getIGStringByHtml(_url):
             aIGRead[_url] = []
         isFirst = (len(aIGRead[_url]) == 0)
         igUrl = "https://www.instagram.com/" + str(_url) + "/?__a=1"
+        # https://www.instagram.com/beauty.ig_/
+        igSorceUrl = "https://www.instagram.com/" + str(_url) + "/"
         txtLog(u"igUrl : " + str(igUrl))
         response = requests.get(igUrl)
         re = response.json()
-        tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
+        # tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
+        # full_name = re['graphql']['user']['full_name']
+        full_name = ''
         aEdges = re['graphql']['user']["edge_owner_to_timeline_media"]['edges']
         for oEdges in aEdges:
             if oEdges['node']['id'] in aIGRead[_url]:
@@ -276,7 +351,8 @@ def getIGStringByHtml(_url):
                                     if 'display_url' in oEdgesOne['node']:
                                         if bIMGFirst:
                                             bIMGFirst = False
-                                            sendMsg('img', igUrl)
+                                            shotPath = shotUrl(igSorceUrl)
+                                            sendMsg('img', u'來源網站 : IG\n' + shotPath)
                                         sendImg(oEdgesOne['node']['display_url'])
                         elif 'display_url' in oEdges['node']:
                             if bIMGFirst:
@@ -294,7 +370,8 @@ def getIGStringByHtml(_url):
                     if 'video_url' in oEdges['node']:
                         if bGIFFirst:
                             bGIFFirst = False
-                            sendMsg('gif', igUrl)
+                            shotPath = shotUrl(igSorceUrl)
+                            sendMsg('gif', u'來源網站 : IG\n' + shotPath)
                         sendMsg('gif', oEdges['node']['video_url'])
 
         if len(aIGRead[_url]) > 999:  # 最多保留30筆
@@ -322,7 +399,7 @@ def startJKF():
         for sId in aId:
             print u"search sId：" + str(sId)
             getJKFLinkByHtml(sId)
-    except:
+    except Exception as e2:
         print u"search JKF 錯誤------"
     print u"search JKF 結束------"
     txtLog("JKF End")
@@ -382,11 +459,13 @@ def getJKFStringByHtml(_url):
         if 'gif' in contentOne:
             if bGIFFirst:
                 bGIFFirst = False
-                sendMsg('gif', _url)
+                shotPath = shotUrl(_url)
+                sendMsg('gif', u'來源網站\n' + shotPath)
         else:
             if bIMGFirst:
                 bIMGFirst = False
-                sendMsg('img', _url)
+                shotPath = shotUrl(_url)
+                sendMsg('img', u'來源網站\n' + shotPath)
         sendImg(contentOne)
 
 
@@ -410,7 +489,7 @@ def startCK():
         for sId in aId:
             print u"search sId：" + str(sId)
             getCKLinkByHtml(sId)
-    except:
+    except Exception as e2:
         print u"search CK 錯誤------"
     print u"search CK 結束------"
     txtLog("CK End")
@@ -470,11 +549,13 @@ def getCKStringByHtml(_url):
             if 'gif' in contentOne:
                 if bGIFFirst:
                     bGIFFirst = False
-                    sendMsg('gif', _url)
+                    shotPath = shotUrl(_url)
+                    sendMsg('gif', u'\n來源網站\n' + shotPath)
             else:
                 if bIMGFirst:
                     bIMGFirst = False
-                    sendMsg('img', _url)
+                    shotPath = shotUrl(_url)
+                    sendMsg('img', u'\n來源網站\n' + shotPath)
             sendImg(contentOne)
 
 
@@ -485,32 +566,35 @@ while True:
 
     # PTT
     if iLoopIndex >= 0:
-        t_ptt = Thread(target=startPTT)
-        t_ptt.start()
-        t_ptt.join()
+        # t_ptt = Thread(target=startPTT)
+        # t_ptt.start()
+        startPTT()
 
     # 漫畫 5分鐘
     if iLoopIndex % 30 == 0:
         t_comic = Thread(target=startLoadEpisode)
         t_comic.start()
-        time.sleep(0.1)
+        # startLoadEpisode()
 
     # IG 10分鐘
     if iLoopIndex % 60 == 0:
-        t_ig = Thread(target=startIG)
-        t_ig.start()
+        # t_ig = Thread(target=startIG)
+        # t_ig.start()
+        startIG()
 
     # JKF 12分鐘
-    if iLoopIndex % 72 == 0:
-        t_ptt = Thread(target=startJKF)
-        t_ptt.start()
-        t_ptt.join()
+    if iLoopIndex % 60 == 0:
+        # t_ptt = Thread(target=startJKF)
+        # t_ptt.start()
+        # t_ptt.join()
+        startJKF()
 
     # CK 14分鐘
-    if iLoopIndex % 84 == 0:
-        t_ptt = Thread(target=startCK)
-        t_ptt.start()
-        t_ptt.join()
+    if iLoopIndex % 60 == 0:
+        # t_ptt = Thread(target=startCK)
+        # t_ptt.start()
+        # t_ptt.join()
+        startCK()
 
     iLoopIndex = iLoopIndex + 1
     for x in range(10):

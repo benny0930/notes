@@ -1,15 +1,35 @@
 # -*- coding: utf-8 -*-
 import requests
 import bs4
-import os
+import os , json
 import time
 from threading import Thread
 import requests.packages.urllib3
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 requests.packages.urllib3.disable_warnings()
-URL = 'https://ck101.com/forum-3866-1.html?order_by=dateline'
-headers = {'cookie': 'over18=1;',
-           'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'}
-response = requests.get(URL, headers=headers)
-soup = bs4.BeautifulSoup(response.text, "html.parser")
-print soup
+aPTTRead = aHNBangRead = []
+aIGRead = {}
+aJKFRead = {}
+aCKRead = {}
+iLoopIndex = 0
+iGIFIndex = 0
+iIMGIndex = 0
+
+file_path2 = "./shotUrl.txt"
+if not os.path.isfile(file_path2):
+    f2 = open(file_path2, 'w')
+    f2.close()
+
+f2 = open(file_path2, 'r')
+file_data = f2.read()
+f2.close()
+
+print file_data
+aShotUrl = json.loads(file_data)
+print aShotUrl
+aShotUrl['url_555'] = "5555"
+aShotUrl['url_666'] = "6666"
+
