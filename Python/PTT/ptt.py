@@ -134,6 +134,7 @@ def startLoadEpisode():
 # PTT Start ----------------------------------------------------------------
 def startPTT():
     print u"search PTT 開始------"
+    txtLog("PTT Start")
     try:
         url = 'https://www.ptt.cc/bbs/Beauty/index.html'
         key = 'gif'
@@ -142,6 +143,7 @@ def startPTT():
     except:
         time.sleep(0.1)
     print u"search PTT 結束------"
+    txtLog("PTT End")
 
 
 def getPTTLinkByHtml(_url):
@@ -190,11 +192,11 @@ def getPTTLinkByHtml(_url):
                             if 'gif' in contentOne:
                                 if bGIFFirst:
                                     bGIFFirst = False
-                                    sendMsg('gif', _url)
+                                    sendMsg('gif', 'https://www.ptt.cc' + thisUrl)
                             else:
                                 if bIMGFirst:
                                     bIMGFirst = False
-                                    sendMsg('img', _url)
+                                    sendMsg('img', 'https://www.ptt.cc' + thisUrl)
                             sendImg(contentOne)
     if len(aPTTRead) > 30:  # 最多保留30筆
         aPTTRead.remove(aPTTRead[0])
@@ -205,6 +207,7 @@ def getPTTLinkByHtml(_url):
 
 # IG Start ----------------------------------------------------------------
 def startIG():
+    txtLog("IG Start")
     print u"search IG 開始------"
     try:
         file_path1 = "./IG_new.txt"
@@ -241,6 +244,7 @@ def startIG():
     except:
         time.sleep(0.1)
     print u"search IG 結束------"
+    txtLog("IG End")
 
 
 def getIGStringByHtml(_url):
@@ -248,52 +252,61 @@ def getIGStringByHtml(_url):
     global aIGRead
     bIMGFirst = True
     bGIFFirst = True
-    if _url not in aIGRead:
-        aIGRead[_url] = []
-    isFirst = (len(aIGRead[_url]) == 0)
-    igUrl = "https://www.instagram.com/" + str(_url) + "/?__a=1"
-    txtLog(u"igUrl : " + str(igUrl))
-    response = requests.get(igUrl)
-    re = response.json()
-    tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
-    aEdges = re['graphql']['user']["edge_owner_to_timeline_media"]['edges']
-    for oEdges in aEdges:
-        if oEdges['node']['id'] in aIGRead[_url]:
-            time.sleep(0.1)
-        else:
-            aIGRead[_url].append(oEdges['node']['id'])
-            if not isFirst:
-                if 'node' in oEdges:
-                    if 'edge_sidecar_to_children' in oEdges['node']:
-                        if 'edges' in oEdges['node']['edge_sidecar_to_children']:
-                            aEdgesOne = oEdges['node']['edge_sidecar_to_children']['edges']
-                            for oEdgesOne in aEdgesOne:
-                                if 'display_url' in oEdgesOne['node']:
-                                    if bIMGFirst:
-                                        bIMGFirst = False
-                                        sendMsg('img', igUrl)
-                                    sendImg(oEdgesOne['node']['display_url'])
+    try:
+        if _url not in aIGRead:
+            aIGRead[_url] = []
+        isFirst = (len(aIGRead[_url]) == 0)
+        igUrl = "https://www.instagram.com/" + str(_url) + "/?__a=1"
+        txtLog(u"igUrl : " + str(igUrl))
+        response = requests.get(igUrl)
+        re = response.json()
+        tgUrl = "https://api.telegram.org/bot1357341611:AAEEazD1g98tQK8W6Q-Qy6Vlu-2VFlrNTa8/sendMessage?"
+        aEdges = re['graphql']['user']["edge_owner_to_timeline_media"]['edges']
+        for oEdges in aEdges:
+            if oEdges['node']['id'] in aIGRead[_url]:
+                time.sleep(0.1)
+            else:
+                aIGRead[_url].append(oEdges['node']['id'])
+                if not isFirst:
+                    if 'node' in oEdges:
+                        if 'edge_sidecar_to_children' in oEdges['node']:
+                            if 'edges' in oEdges['node']['edge_sidecar_to_children']:
+                                aEdgesOne = oEdges['node']['edge_sidecar_to_children']['edges']
+                                for oEdgesOne in aEdgesOne:
+                                    if 'display_url' in oEdgesOne['node']:
+                                        if bIMGFirst:
+                                            bIMGFirst = False
+                                            sendMsg('img', igUrl)
+                                        sendImg(oEdgesOne['node']['display_url'])
+                        elif 'display_url' in oEdges['node']:
+                            if bIMGFirst:
+                                bIMGFirst = False
+                                sendMsg('img', igUrl)
+                            sendImg(oEdges['node']['display_url'])
 
-    aEdges = re['graphql']['user']["edge_felix_video_timeline"]['edges']
-    for oEdges in aEdges:
-        if oEdges['node']['id'] in aIGRead[_url]:
-            time.sleep(0.1)
-        else:
-            aIGRead[_url].append(oEdges['node']['id'])
-            if not isFirst:
-                if 'video_url' in oEdges['node']:
-                    if bGIFFirst:
-                        bGIFFirst = False
-                        sendMsg('gif', igUrl)
-                    sendImg(oEdges['node']['video_url'])
+        aEdges = re['graphql']['user']["edge_felix_video_timeline"]['edges']
+        for oEdges in aEdges:
+            if oEdges['node']['id'] in aIGRead[_url]:
+                time.sleep(0.1)
+            else:
+                aIGRead[_url].append(oEdges['node']['id'])
+                if not isFirst:
+                    if 'video_url' in oEdges['node']:
+                        if bGIFFirst:
+                            bGIFFirst = False
+                            sendMsg('gif', igUrl)
+                        sendMsg('gif', oEdges['node']['video_url'])
 
-    if len(aIGRead[_url]) > 999:  # 最多保留30筆
-        aHNBangRead.remove(aIGRead[_url][0])
+        if len(aIGRead[_url]) > 999:  # 最多保留30筆
+            aHNBangRead.remove(aIGRead[_url][0])
+    except Exception as e2:
+        print e2
 
 
 # IG End ----------------------------------------------------------------
 # JKF Start ----------------------------------------------------------------
 def startJKF():
+    txtLog("JKF Start")
     print u"search JKF 開始------"
     try:
         # aId = ['393', '520', '1112', '574', '640', '611', '587', '535', '234']
@@ -312,6 +325,7 @@ def startJKF():
     except:
         print u"search JKF 錯誤------"
     print u"search JKF 結束------"
+    txtLog("JKF End")
 
 
 def getJKFLinkByHtml(_id):
@@ -380,6 +394,7 @@ def getJKFStringByHtml(_url):
 
 # CK Start ----------------------------------------------------------------
 def startCK():
+    txtLog("CK Start")
     print u"search CK 開始------"
     try:
         # aId = ['forum-3866-1']
@@ -398,6 +413,7 @@ def startCK():
     except:
         print u"search CK 錯誤------"
     print u"search CK 結束------"
+    txtLog("CK End")
 
 
 def getCKLinkByHtml(_id):
